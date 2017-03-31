@@ -21,6 +21,7 @@ SOURCES     = ${ROBOT}.cpp TCPServer.cpp
 SHIPDIR     = drivers/${ROBOT}
 SHIP        = ${ROBOT}.xml kc-corvette-ttop.rgb logo.rgb
 SHIPSUBDIRS = 
+COMPILFLAGS = --std=c++11
 
 PKGSUBDIRS  = ${SHIPSUBDIRS}
 src-robots-soarbot_PKGFILES = $(shell find * -maxdepth 0 -type f -print)
