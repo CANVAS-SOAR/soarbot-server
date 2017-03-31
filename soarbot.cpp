@@ -31,6 +31,12 @@
 #include <robottools.h>
 #include <robot.h>
 
+#include "TCPServer.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
+
+static TCPServer server(0);
 static tTrack	*curTrack;
 
 static void initTrack(int index, tTrack* track, void *carHandle, void **carParmHandle, tSituation *s); 
@@ -62,6 +68,12 @@ soarbot(tModInfo *modInfo)
 static int 
 InitFuncPt(int index, void *pt) 
 { 
+    if(server.Bind()){
+        if(server.Listen()){
+            printf("Server listening to port:%d\n", server.GetPort());
+            server.Accept();
+        }
+    }
     tRobotItf *itf  = (tRobotItf *)pt; 
 
     itf->rbNewTrack = initTrack; /* Give the robot the track view called */ 
@@ -93,16 +105,20 @@ newrace(int index, tCarElt* car, tSituation *s)
 static void  
 drive(int index, tCarElt* car, tSituation *s) 
 { 
-    memset((void *)&car->ctrl, 0, sizeof(tCarCtrl)); 
-    car->ctrl.brakeCmd = 1.0; /* all brakes on ... */ 
-    /*  
-     * add the driving code here to modify the 
-     * car->_steerCmd 
-     * car->_accelCmd 
-     * car->_brakeCmd 
-     * car->_gearCmd 
-     * car->_clutchCmd 
-     */ 
+    if(server.Send("Drive me!")){
+        std::string msg;
+        if(server.Receive(msg)){
+            json j = json::parse(msg);
+
+            memset((void *)&car->ctrl, 0, sizeof(tCarCtrl));
+
+            car->_steerCmd = j["steerCmd"];
+            car->_accelCmd = j["accelCmd"];
+            car->_brakeCmd = j["brakeCmd"];
+            car->_clutchCmd = j["clutchCmd"];
+            car->_gearCmd = j["gearCmd"];
+        }
+    }
 }
 
 /* End of the current race */
